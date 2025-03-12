@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>争分夺秒消消乐</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #F5E6D3;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
+            width: 100%;
+        }
+        
+        .game-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 10px;
+            width: 100%;
+        }
+        
+        .game-info, .timer {
+            font-size: clamp(18px, 5vw, 24px);
+            color: #8B7355;
+        }
+        
+        .sound-button {
+            font-size: clamp(18px, 5vw, 24px);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            color: #8B7355;
+        }
+        
+        canvas {
+            border: 2px solid #8B7355;
+            border-radius: 10px;
+            margin: 10px;
+            background-color: #FFF8DC;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            max-width: 100%;
+            max-height: 80vh;
+        }
+        
+        /* 修改计时器样式，使其更显眼 */
+        .timer {
+            font-size: clamp(18px, 5vw, 28px);
+            color: #8B7355;
+            padding: 5px 15px;
+            background: rgba(255, 248, 220, 0.8);
+            border-radius: 10px;
+            border: 2px solid #8B7355;
+        }
+        
+        /* 添加游戏标题样式 */
+        .game-title {
+            text-align: center;
+            margin: 10px 0;
+            width: 100%;
+        }
+        
+        .game-title h1 {
+            color: #8B7355;
+            font-size: clamp(24px, 7vw, 32px);
+            margin: 0;
+            margin-bottom: 5px;
+        }
+        
+        .game-title .author {
+            color: #8B7355;
+            font-size: clamp(12px, 4vw, 16px);
+            opacity: 0.8;
+        }
+        
+        /* 其他样式保持不变 */
+        /* ... 其他CSS ... */
+        
+        /* 移动设备优化 */
+        @media (max-width: 480px) {
+            .game-controls {
+                gap: 10px;
+            }
+            
+            canvas {
+                margin: 5px;
+            }
+            
+            .timer, .game-info {
+                padding: 3px 8px;
+            }
+        }
+        
+        /* 结算界面样式 */
+        .game-over-background {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+        
+        .game-over-content {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 248, 220, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            border: 3px solid #8B7355;
+            min-width: 300px;
+            z-index: 102;
+        }
+        
+        .game-over-content h2 {
+            color: #8B7355;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        .game-over-score {
+            font-size: 36px;
+            color: #8B7355;
+            margin: 20px 0;
+        }
+        
+        .restart-button {
+            font-size: 20px;
+            padding: 10px 20px;
+            background: #8B7355;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .restart-button:hover {
+            opacity: 0.9;
+        }
+        
+        #fireworksCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 101;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-title">
+            <h1>争分夺秒消消乐</h1>
+            <div class="author">作者：大娜娜酱</div>
+        </div>
+        
+        <div class="game-controls">
+            <div class="game-info">分数: <span id="score">0</span></div>
+            <div class="timer">时间: <span id="time">30</span>s</div>
+            <button id="soundToggle" class="sound-button">🔊</button>
+        </div>
+        
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+    </div>
+    
+    <div class="game-over-background" id="gameOverBackground"></div>
+    <canvas id="fireworksCanvas"></canvas>
+    <div class="game-over-content" id="gameOverContent">
+        <h2>游戏结束</h2>
+        <div class="game-over-score">得分: <span id="finalScore">0</span></div>
+        <button class="restart-button" onclick="restartGame()">再来一局</button>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html> 
