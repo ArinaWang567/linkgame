@@ -172,9 +172,9 @@ const soundConfig = {
 
 // 修改音效控制按钮
 const soundToggle = document.getElementById('soundToggle');
-soundToggle.addEventListener('click', () => {
+soundToggle.addEventListener('click', function() {
     soundConfig.enabled = !soundConfig.enabled;
-    soundToggle.textContent = soundConfig.enabled ? '🔊' : '🔈';
+    this.classList.toggle('muted', !soundConfig.enabled);
 });
 
 // 修改播放音效函数
@@ -1765,4 +1765,366 @@ function createFireworkBurstSound() {
             }
         });
     }, 5000);
-} 
+}
+
+// 添加烟雾效果相关代码
+let smokeCanvas, smokeCtx;
+let smokeParticles = [];
+let isSmokePlaying = false;
+
+// 在页面加载完成后初始化烟雾效果
+document.addEventListener('DOMContentLoaded', function() {
+    initSmoke();
+});
+
+function initSmoke() {
+    smokeCanvas = document.getElementById('smokeCanvas');
+    smokeCtx = smokeCanvas.getContext('2d');
+    
+    // 设置canvas尺寸为窗口大小
+    function resizeCanvas() {
+        smokeCanvas.width = window.innerWidth;
+        smokeCanvas.height = window.innerHeight;
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // 创建烟雾粒子但不立即显示
+    smokeParticles = Array(15).fill().map(() => new SmokeParticle());
+    
+    console.log("烟雾效果已初始化");
+}
+
+class SmokeParticle {
+    constructor() {
+        this.reset();
+    }
+    
+    reset() {
+        // 确保烟雾canvas存在
+        if (!smokeCanvas) return;
+        
+        this.x = Math.random() * smokeCanvas.width;
+        this.y = Math.random() * smokeCanvas.height;
+        this.size = Math.random() * 100 + 50;
+        this.opacity = Math.random() * 0.4 + 0.1; // 稍微提高初始透明度
+        this.speed = Math.random() * 2 + 1;
+        this.angle = Math.random() * Math.PI * 2;
+    }
+    
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.opacity -= 0.003; // 减慢淡出速度
+        
+        if (this.opacity <= 0) {
+            this.reset();
+        }
+    }
+    
+    draw() {
+        if (!smokeCtx) return;
+        
+        smokeCtx.beginPath();
+        const gradient = smokeCtx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size
+        );
+        gradient.addColorStop(0, `rgba(139, 115, 85, ${this.opacity})`);
+        gradient.addColorStop(1, 'rgba(139, 115, 85, 0)');
+        smokeCtx.fillStyle = gradient;
+        smokeCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        smokeCtx.fill();
+    }
+}
+
+function startSmokeEffect() {
+    if (isSmokePlaying) return;
+    
+    console.log("启动烟雾效果");
+    isSmokePlaying = true;
+    
+    // 确保烟雾canvas存在
+    if (!smokeCanvas) initSmoke();
+    
+    // 使用CSS过渡效果使烟雾逐渐显示
+    smokeCanvas.style.transition = 'opacity 1s';
+    smokeCanvas.style.opacity = '1';
+    
+    // 重新创建烟雾粒子
+    smokeParticles = Array(15).fill().map(() => new SmokeParticle());
+    
+    // 启动动画
+    requestAnimationFrame(animateSmoke);
+}
+
+function stopSmokeEffect() {
+    console.log("停止烟雾效果");
+    isSmokePlaying = false;
+    smokeCanvas.style.opacity = '0';
+    
+    // 清除画布
+    if (smokeCtx) {
+        smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+    }
+}
+
+function animateSmoke() {
+    if (!isSmokePlaying) return;
+    
+    if (smokeCtx && smokeCanvas) {
+        smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+        
+        smokeParticles.forEach(particle => {
+            particle.update();
+            particle.draw();
+        });
+    }
+    
+    requestAnimationFrame(animateSmoke);
+}
+
+// 修改或添加游戏计时器的相关代码
+// 这是一个假设的函数，你需要将它整合到你现有的游戏逻辑中
+function updateTimer() {
+    let timeLeft = parseInt(document.getElementById('time').textContent);
+    timeLeft--;
+    document.getElementById('time').textContent = timeLeft;
+    
+    console.log("倒计时:", timeLeft);
+    
+    // 在剩余10秒时启动烟雾效果
+    if (timeLeft === 10) {
+        startSmokeEffect();
+    }
+    
+    // 游戏结束时停止烟雾效果
+    if (timeLeft <= 0) {
+        stopSmokeEffect();
+        // 其他游戏结束逻辑...
+    }
+}
+
+// 确保此函数能在原有游戏中被正确调用
+// 如果你有现有的更新计时器的函数，请在其中添加烟雾效果的相关代码
+
+// 测试函数 - 可以在控制台中调用此函数来手动测试烟雾效果
+function testSmokeEffect() {
+    startSmokeEffect();
+    setTimeout(() => {
+        stopSmokeEffect();
+    }, 10000);
+}
+
+// 将testSmokeEffect函数暴露到全局作用域
+window.testSmokeEffect = testSmokeEffect;
+    
+// 修改游戏计时器代码，在剩余10秒时启动烟雾效果
+function updateTimer() {
+    if (!gameState.isRunning) return;
+    
+    const now = Date.now();
+    // 确保至少过了1秒才更新
+    if (now - gameState.lastTimerUpdate >= 1000) {
+        gameState.timeRemaining--;
+        const timeElement = document.getElementById('time');
+        const timerContainer = document.querySelector('.timer');
+        timeElement.textContent = gameState.timeRemaining;
+        gameState.lastTimerUpdate = now;
+        
+        // 播放计时音效
+        if (soundConfig.enabled) {
+            if (gameState.timeRemaining <= 5) {
+                // 最后5秒播放警告音效
+                createTimerSound(true);
+                timerContainer.classList.add('warning');
+            } else if (gameState.timeRemaining <= 10) {
+                // 10秒内播放普通音效
+                createTimerSound();
+                if (!timerContainer.classList.contains('warning')) {
+                    timerContainer.classList.add('warning');
+                }
+            }
+        }
+        
+        if (gameState.timeRemaining <= 0) {
+            endGame('时间到！');
+        }
+    }
+}
+
+// 检查是否所有方块都已消失的函数
+function allBlocksCleared() {
+    // 这里需要根据你的游戏逻辑实现
+    // 返回true如果所有方块都已消失，否则返回false
+    // 示例实现：
+    return blocks.length === 0 || blocks.every(block => block.cleared);
+}
+
+// 显示烟花效果
+function showFireworks() {
+    const fireworksCanvas = document.getElementById('fireworksCanvas');
+    fireworksCanvas.style.display = 'block';
+    
+    const ctx = fireworksCanvas.getContext('2d');
+    fireworksCanvas.width = window.innerWidth;
+    fireworksCanvas.height = window.innerHeight;
+    
+    // 烟花粒子集合
+    let particles = [];
+    let fireworks = [];
+    
+    // 烟花爆炸函数
+    function createExplosion(x, y, color) {
+        const particleCount = 80;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            const size = Math.random() * 3 + 1;
+            const lifetime = Math.random() * 30 + 60; // 帧数
+            
+            particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 0.5, // 轻微上升效果
+                size: size,
+                color: color,
+                alpha: 1,
+                lifetime: lifetime,
+                age: 0
+            });
+        }
+    }
+    
+    // 创建上升烟花
+    function createFirework() {
+        const x = Math.random() * fireworksCanvas.width;
+        const targetY = Math.random() * fireworksCanvas.height / 2;
+        const startY = fireworksCanvas.height;
+        const color = `hsl(${Math.random() * 360}, 80%, 60%)`;
+        
+        fireworks.push({
+            x: x,
+            y: startY,
+            targetY: targetY,
+            speed: Math.random() * 3 + 5,
+            color: color
+        });
+    }
+    
+    // 初始创建几个烟花
+    for (let i = 0; i < 4; i++) {
+        setTimeout(() => createFirework(), i * 1000);
+    }
+    
+    // 动画循环
+    function animate() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+        
+        // 更新并绘制粒子
+        particles.forEach((p, index) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.05; // 重力
+            p.alpha = 1 - (p.age / p.lifetime);
+            p.age++;
+            
+            if (p.age <= p.lifetime) {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+                ctx.fill();
+            } else {
+                particles.splice(index, 1);
+            }
+        });
+        
+        // 更新并绘制上升的烟花
+        fireworks.forEach((f, index) => {
+            f.y -= f.speed;
+            
+            if (f.y <= f.targetY) {
+                createExplosion(f.x, f.y, f.color);
+                fireworks.splice(index, 1);
+                
+                // 有几率再创建一个新烟花
+                if (Math.random() < 0.3) {
+                    setTimeout(createFirework, Math.random() * 1000);
+                }
+            } else {
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = f.color;
+                ctx.fill();
+            }
+        });
+        
+        // 如果仍有粒子或烟花，继续动画
+        if (particles.length > 0 || fireworks.length > 0) {
+            requestAnimationFrame(animate);
+        } else {
+            // 烟花结束，隐藏画布，显示结算界面
+            setTimeout(() => {
+                fireworksCanvas.style.display = 'none';
+                showGameOverScreen(currentScore);
+            }, 1000);
+        }
+    }
+    
+    animate();
+}
+
+// 分数递减动画效果
+function showScoreDecreaseAnimation(startScore) {
+    document.getElementById('gameOverBackground').style.display = 'block';
+    document.getElementById('gameOverContent').style.display = 'block';
+    
+    let currentDisplayScore = startScore;
+    const finalScoreElement = document.getElementById('finalScore');
+    finalScoreElement.textContent = currentDisplayScore;
+    
+    // 计算每次减少的分数和时间间隔，使整个动画持续约2秒
+    const totalDecrease = startScore;
+    const step = Math.max(1, Math.ceil(totalDecrease / 60)); // 60帧 ≈ 1秒
+    const interval = 1000 / 30; // 30fps
+    
+    const scoreDecreaseInterval = setInterval(() => {
+        currentDisplayScore = Math.max(0, currentDisplayScore - step);
+        finalScore.textContent = currentDisplayScore;
+        
+        // 当分数减到0或接近0时停止
+        if (currentDisplayScore <= 0) {
+            clearInterval(scoreDecreaseInterval);
+            finalScore.textContent = '0';
+        }
+    }, interval);
+}
+
+// 修改游戏结束处理函数
+function gameOver() {
+    // 停止游戏计时器等逻辑
+    // ...
+    
+    // 获取当前分数
+    const currentScore = parseInt(document.getElementById('score').textContent);
+    
+    // 检查是否所有方块都已消失
+    if (allBlocksCleared()) {
+        // 全部方块都匹配消失，展示烟花效果
+        showFireworks();
+    } else {
+        // 还有方块存在，展示分数递减动画
+        showScoreDecreaseAnimation(currentScore);
+    }
+}
+
+// 统一的游戏结束界面显示函数
+function showGameOverScreen(score) {
+    document.getElementById('gameOverBackground').style.display = 'block';
+    document.getElementById('gameOverContent').style.display = 'block';
+    document.getElementById('finalScore').textContent = score;
+}
+    
